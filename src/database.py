@@ -1,4 +1,4 @@
-import configparser
+import yaml
 import sys
 import os
 from pymongo import MongoClient
@@ -10,27 +10,33 @@ logger = Logger(SHOW_LOG).get_logger(__name__)
 
 def get_database():
     """
-    Читает параметры подключения к MongoDB из config_secret.ini, устанавливает соединение
+    Читает параметры подключения к MongoDB из secrets.yml, устанавливает соединение
     и возвращает объект базы данных.
     """
+    # Достаем secrets
     base_dir = os.path.dirname(__file__)
-    config_file_path = os.path.join(base_dir, '..', 'config_secret.ini')
-    config = configparser.ConfigParser()
-    config.read(config_file_path)
+    secrets_file_path = os.path.join(base_dir, '..', 'secrets.yml')
     
-    if 'DATABASE' not in config: # pragma: no cover
-        logger.error(f"В файле {config_file_path} не найден раздел [DATABASE].")
+    try:
+        with open(secrets_file_path, "r") as file:
+            secrets = yaml.safe_load(file)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки файла секретов {secrets_file_path}", exc_info=True)
         sys.exit(1)
     
-    db_config = config['DATABASE']
-    host = db_config.get('host')
-    port = db_config.getint('port')
-    user = db_config.get('user')
-    password = db_config.get('password')
-    dbname = db_config.get('name')
+    try:
+        host = secrets['host']
+        port = secrets['port']
+        user = secrets['user']
+        password = secrets['password']
+        dbname = secrets['name']
+    except KeyError as e:
+        logger.error(f"Отсутствует ключ в конфигурации: {e}")
+        sys.exit(1)
     
     # Формируем URI
     uri = f"mongodb://{user}:{password}@{host}:{port}/{dbname}?authSource=admin"
+    logger.info(f"MongoDB URI: {uri}")
     
     try:
         client = MongoClient(uri)
