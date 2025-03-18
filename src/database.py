@@ -16,13 +16,8 @@ def get_database():
     # Достаем secrets
     base_dir = os.path.dirname(__file__)
     secrets_file_path = os.path.join(base_dir, '..', 'secrets.yml')
-    
-    try:
-        with open(secrets_file_path, "r") as file:
-            secrets = yaml.safe_load(file)
-    except Exception as e:
-        logger.error(f"Ошибка загрузки файла секретов {secrets_file_path}", exc_info=True)
-        sys.exit(1)
+    with open(secrets_file_path, "r") as file:
+        secrets = yaml.safe_load(file)
     
     try:
         host = secrets['host']
@@ -31,7 +26,7 @@ def get_database():
         password = secrets['password']
         dbname = secrets['name']
     except KeyError as e:
-        logger.error(f"Отсутствует ключ в конфигурации: {e}")
+        logger.error(f"Отсутствует ключ авторизации: {e}")
         sys.exit(1)
     
     # Формируем URI

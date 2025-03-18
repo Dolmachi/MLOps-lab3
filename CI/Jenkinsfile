@@ -15,34 +15,23 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 cleanWs()
-                sh 'git clone -b master https://github.com/TravissScottt/MLOps-lab2.git'
+                sh 'git clone -b master https://github.com/Dolmachi/MLOps-lab3.git'
             }
         }
 
-        stage('Add config_secret.ini') {
+        stage('Add Secrets to CI and Run Unit Tests') {
             steps {
-                dir('MLOps-lab2') {
-                    withCredentials([file(credentialsId: 'config_secret', variable: 'SECRET_FILE')]) {
+                dir('MLOps-lab3') {
+                    withCredentials([file(credentialsId: 'vault-key', variable: 'VAULT_KEY')]) {
                         sh '''
-                            cp "$SECRET_FILE" config_secret.ini
-                            echo "Contents of MLOps-lab2 dir after adding secret:"
-                            ls -la
+                            bash -c "
+                                source /home/dolmachi/miniconda3/etc/profile.d/conda.sh &&
+                                conda activate mlops &&
+                                ansible-vault decrypt secrets.yml --vault-password-file $VAULT_KEY &&
+                                pytest src/unit_tests --cov=src --disable-warnings
+                            "
                         '''
                     }
-                }
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                dir('MLOps-lab2') {
-                    sh '''
-                        bash -c "
-                            source /home/dolmachi/miniconda3/etc/profile.d/conda.sh &&
-                            conda activate mlops &&
-                            pytest src/unit_tests --cov=src --disable-warnings
-                        "
-                    '''
                 }
             }
         }
@@ -56,7 +45,7 @@ pipeline {
         stage('Build and Run Docker Container') {
             steps {
                 script {
-                    dir('MLOps-lab2') {
+                    dir('MLOps-lab3') {
                         sh 'docker compose build'
                         sh 'docker compose up -d'
                     }
@@ -66,7 +55,7 @@ pipeline {
 
         stage('Check Container Logs') {
             steps {
-                dir("MLOps-lab2") {
+                dir("MLOps-lab3") {
                     sh '''
                         container_id=$(docker ps -qf "name=api_container")
                         if [ -z "$container_id" ]; then
@@ -81,14 +70,14 @@ pipeline {
 
         stage('Push Docker Image to DockerHub') {
             steps {
-                dir('MLOps-lab2') {
+                dir('MLOps-lab3') {
                     sh '''
-                        image_id=$(docker images -q travissscottt/api_car_price_2:latest)
+                        image_id=$(docker images -q travissscottt/api_car_price_3:latest)
                         if [ -z "$image_id" ]; then
                             echo "Error: Docker image not found. Build might have failed."
                             exit 1
                         fi
-                        docker push travissscottt/api_car_price_2:latest
+                        docker push travissscottt/api_car_price_3:latest
                     '''
                 }
             }
@@ -102,8 +91,7 @@ pipeline {
                 docker rm api_container || true
                 docker stop mongodb_container || true
                 docker rm mongodb_container || true
-                # При желании можно снести сам образ:
-                # docker rmi travissscottt/api_car_price_2:latest || true
+                docker rmi travissscottt/api_car_price_3:latest || true
 
                 docker logout || true
             '''
