@@ -92,7 +92,7 @@ pipeline {
                 docker stop mongodb_container || true
                 docker rm mongodb_container || true
                 docker rmi travissscottt/api_car_price_3:latest || true
-
+                docker rmi mongo:5.0 || true
                 docker logout || true
             '''
             cleanWs()
