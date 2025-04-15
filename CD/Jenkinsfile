@@ -10,13 +10,13 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 cleanWs()
-                sh 'git clone -b master https://github.com/TravissScottt/MLOps-lab2.git'
+                sh 'git clone -b master https://github.com/Dolmachi/MLOps-lab3.git'
             }
         }
 
         stage('Build Images and Run Containers') {
             steps {
-                dir('MLOps-lab2') {
+                dir('MLOps-lab3') {
                     withCredentials([
                         string(credentialsId: 'mongo-username', variable: 'MONGO_USERNAME'),
                         string(credentialsId: 'mongo-password', variable: 'MONGO_PASSWORD')
@@ -24,7 +24,7 @@ pipeline {
                         sh '''
                             echo "MONGO_USERNAME=$MONGO_USERNAME" > .env
                             echo "MONGO_PASSWORD=$MONGO_PASSWORD" >> .env
-                            docker pull travissscottt/api-image-2:latest
+                            docker pull travissscottt/api-image-3:latest
                             docker-compose up -d
                         '''
                     }
@@ -69,7 +69,7 @@ pipeline {
                 docker rm api-container || true
                 docker stop mongodb-container || true
                 docker rm mongodb-container || true
-                docker rmi travissscottt/api-image-2:latest || true
+                docker rmi travissscottt/api-image-3:latest || true
                 docker rmi mongo || true
                 docker logout || true
             '''
