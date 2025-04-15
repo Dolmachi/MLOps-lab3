@@ -1,2 +1,2 @@
-# MLOps-lab3
-MLOps-lab3
+# MLOps Lab 2
+MLOps Lab 2
