@@ -19,6 +19,18 @@ pipeline {
             }
         }
 
+        stage('Install Ansible') {
+            steps {
+                dir('MLOps-lab3') {
+                    sh '''
+                        apt-get update
+                        apt-get install -y python3-pip
+                        pip3 install ansible
+                    '''
+                }
+            }
+        }
+
         stage('Decrypt config_secret.ini') {
             steps {
                 dir('MLOps-lab3') {
