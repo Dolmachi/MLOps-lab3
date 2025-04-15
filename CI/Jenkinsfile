@@ -19,14 +19,14 @@ pipeline {
             }
         }
 
-        stage('Add config_secret.ini') {
+        stage('Decrypt config_secret.ini') {
             steps {
                 dir('MLOps-lab3') {
-                    withCredentials([file(credentialsId: 'config_secret', variable: 'SECRET_FILE')]) {
+                    withCredentials([string(credentialsId: 'vault_key', variable: 'VAULT_KEY')]) {
                         sh '''
-                            cp "$SECRET_FILE" config_secret.ini
-                            echo "Contents of MLOps-lab3 dir after adding secret:"
-                            ls -la
+                            echo "$VAULT_KEY" > vault-key.txt
+                            ansible-vault decrypt config_secret.ini --vault-password-file vault-key.txt
+                            rm vault-key.txt
                         '''
                     }
                 }
